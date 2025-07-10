@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORBIX Ae.N.K.I - Redirecting...</title>
+    <meta http-equiv="refresh" content="0; url=orbix_aenki_dashboard.html">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #1a1a2e 75%, #0a0a0a 100%);
+            color: #ffd700;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .loading {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid #1a1a2e;
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        // Redirección automática al dashboard principal
+        setTimeout(function() {
+            window.location.href = 'orbix_aenki_dashboard.html';
+        }, 100);
+    </script>
+</head>
+<body>
+    <div class="loading">
+        <h1>🛡️ ORBIX Ae.N.K.I</h1>
+        <div class="spinner"></div>
+        <p>Iniciando Sistema de Defensa IA...</p>
+        <p><small>Si no se redirige automáticamente, <a href="orbix_aenki_dashboard.html" style="color: #ffd700;">haz clic aquí</a></small></p>
+    </div>
+</body>
+</html>

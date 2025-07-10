@@ -2490,6 +2490,235 @@
                 speakWelcome();
             }, 2000);
         });
+
+        // Sistema de inicialización mejorado
+        function initializeSystem() {
+            addStatusLine('🚀 Iniciando sistema ORBIX Ae.N.K.I...');
+            
+            // Verificar soporte de navegador
+            checkBrowserSupport();
+            
+            // Inicializar reconocimiento de voz
+            initializeSpeechRecognition();
+            
+            // Inicializar síntesis de voz
+            initializeSpeechSynthesis();
+            
+            // Inicializar avatar
+            initializeAvatarImage();
+            
+            // Verificar conexión con servidor
+            checkServerConnection();
+            
+            // Configurar eventos
+            setupEventListeners();
+            
+            // Cargar configuración guardada
+            loadSystemConfiguration();
+            
+            // Inicializar particulas
+            createParticles();
+            
+            // Configurar actualizaciones periódicas
+            setupPeriodicUpdates();
+            
+            addStatusLine('✅ Sistema ORBIX completamente inicializado');
+        }
+
+        function checkBrowserSupport() {
+            const features = {
+                speechRecognition: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+                speechSynthesis: 'speechSynthesis' in window,
+                webGL: !!window.WebGLRenderingContext,
+                mediaDevices: 'mediaDevices' in navigator,
+                localStorage: typeof(Storage) !== 'undefined'
+            };
+            
+            Object.keys(features).forEach(feature => {
+                if (features[feature]) {
+                    addStatusLine(`✅ ${feature}: Soportado`);
+                } else {
+                    addStatusLine(`❌ ${feature}: No soportado`);
+                }
+            });
+        }
+
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'es-ES';
+                recognition.maxAlternatives = 5;
+
+                recognition.onstart = function() {
+                    addStatusLine('🎤 Reconocimiento de voz iniciado');
+                };
+
+                recognition.onresult = function(event) {
+                    let transcript = '';
+                    let confidence = 0;
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const result = event.results[i];
+                        if (result.isFinal) {
+                            transcript += result[0].transcript;
+                            confidence = result[0].confidence;
+                        }
+                    }
+                    
+                    if (transcript.trim()) {
+                        addMessage(transcript, 'user');
+                        addStatusLine(`🎤 Reconocido: "${transcript}" (${Math.round(confidence * 100)}% confianza)`);
+                        processAenkiResponse(transcript);
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Error de reconocimiento de voz:', event.error);
+                    addStatusLine(`❌ Error de voz: ${event.error}`);
+                    
+                    if (event.error === 'no-speech' || event.error === 'audio-capture') {
+                        setTimeout(() => {
+                            if (isListening) {
+                                recognition.start();
+                            }
+                        }, 1000);
+                    }
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    document.getElementById('voiceBtn').classList.remove('listening');
+                    document.getElementById('voiceBtn').classList.add('idle');
+                    stopListeningAnimation();
+                };
+
+                // Verificar permisos de micrófono
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        addStatusLine('✅ Micrófono autorizado');
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(function(err) {
+                        addStatusLine('❌ Permisos de micrófono denegados');
+                    });
+            }
+        }
+
+        function initializeSpeechSynthesis() {
+            if ('speechSynthesis' in window) {
+                synthesis = window.speechSynthesis;
+                addStatusLine('✅ Síntesis de voz disponible');
+                
+                // Cargar voces disponibles
+                const loadVoices = () => {
+                    const voices = synthesis.getVoices();
+                    const spanishVoices = voices.filter(voice => voice.lang.includes('es'));
+                    addStatusLine(`🗣️ ${spanishVoices.length} voces en español disponibles`);
+                };
+                
+                if (synthesis.onvoiceschanged !== undefined) {
+                    synthesis.onvoiceschanged = loadVoices;
+                }
+                loadVoices();
+            }
+        }
+
+        function checkServerConnection() {
+            addStatusLine('🔗 Verificando conexión con servidor...');
+            
+            // Verificar imagen del avatar
+            const img = new Image();
+            img.onload = function() {
+                addStatusLine('✅ Conexión con sistemasorbix.com establecida');
+            };
+            img.onerror = function() {
+                addStatusLine('⚠️ Problema de conexión - Usando recursos locales');
+            };
+            img.src = 'https://sistemasorbix.com/assets/img/aenki-avatar.png';
+        }
+
+        function setupEventListeners() {
+            // Eventos del chat
+            document.getElementById('chatInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Eventos de redimensionamiento
+            window.addEventListener('resize', function() {
+                // Actualizar canvas si existe
+                if (aenkiAvatar) {
+                    aenkiAvatar.resize();
+                }
+            });
+            
+            // Eventos de visibilidad
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && isListening) {
+                    toggleVoice(); // Detener reconocimiento si la ventana se oculta
+                }
+            });
+            
+            addStatusLine('✅ Event listeners configurados');
+        }
+
+        function loadSystemConfiguration() {
+            // Cargar configuración del avatar
+            loadAvatarConfig();
+            
+            // Cargar configuración de voz
+            const speechConfig = localStorage.getItem('aenkiSpeechConfig');
+            if (speechConfig) {
+                window.aenkiSpeechSettings = JSON.parse(speechConfig);
+                addStatusLine('📁 Configuración de voz cargada');
+            }
+            
+            // Cargar configuración de sistema
+            const systemConfig = localStorage.getItem('aenkiSystemConfig');
+            if (systemConfig) {
+                const config = JSON.parse(systemConfig);
+                isMuted = config.isMuted || false;
+                addStatusLine('📁 Configuración del sistema cargada');
+            }
+        }
+
+        function setupPeriodicUpdates() {
+            // Actualizar estado cada 30 segundos
+            setInterval(() => {
+                updateSystemStatus();
+            }, 30000);
+            
+            // Verificar amenazas cada 60 segundos
+            setInterval(() => {
+                if (scanResults.length > 0) {
+                    checkForThreats();
+                }
+            }, 60000);
+            
+            addStatusLine('✅ Actualizaciones periódicas configuradas');
+        }
+
+        function updateSystemStatus() {
+            const status = {
+                timestamp: new Date().toISOString(),
+                isListening: isListening,
+                isMuted: isMuted,
+                avatarActive: isAvatarActive,
+                scanResults: scanResults.length,
+                threats: threatLevel
+            };
+            
+            // Guardar estado
+            localStorage.setItem('aenkiSystemStatus', JSON.stringify(status));
+            
+            // Actualizar UI si es necesario
+            document.getElementById('avatarStatus').textContent = 
+                `🟢 En línea - ${scanResults.length} dispositivos - ${threatLevel} amenazas`;
+        }
     </script>
 </body>
 </html>
